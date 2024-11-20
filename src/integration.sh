@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Checking..."
+echo "Begin testing..."
 sleep 3
 
 host=localhost
