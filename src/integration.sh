@@ -1,10 +1,33 @@
 #!/bin/bash
-
-echo "Begin testing..."
+echo "Checking..."
 sleep 3
 
 host=localhost
 port=80
+
+# Function to check if the database is connected
+check_db_connection() {
+  response=$(curl -s -o /dev/null -w "%{http_code}" $host:$port/api)
+  if [ "$response" -eq 200 ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# Retry mechanism to wait for the database connection
+max_retries=5
+retry_count=0
+until check_db_connection || [ $retry_count -eq $max_retries ]; do
+  echo "Waiting for database connection..."
+  sleep 3
+  retry_count=$((retry_count + 1))
+done
+
+if [ $retry_count -eq $max_retries ]; then
+  echo "Failed to connect to the database after $max_retries attempts."
+  exit 1
+fi
 
 # Check if there are existing messages
 messages_response=`curl -s $host:$port/api`
