@@ -20,12 +20,23 @@ console.log('NODE_ENV: ' + environment);
 
 var app = express();
 
-MongoClient.connect(url, function (err, mongoDb) {
-  assert.equal(null, err);
-  console.log("Connected to database");
+function connectWithRetry(retries) {
+  MongoClient.connect(url, function (err, mongoDb) {
+    if (err) {
+      if (retries > 0) {
+        console.log(`Retrying connection... Attempts left: ${retries}`);
+        setTimeout(() => connectWithRetry(retries - 1), 5000); // Retry after 5 seconds
+      } else {
+        assert.equal(null, err); // If no retries left, throw the error
+      }
+    } else {
+      console.log("Connected to database");
+      db = mongoDb;
+    }
+  });
+}
 
-  db = mongoDb;
-});
+connectWithRetry(5); // Attempt to connect with 5 retries
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
